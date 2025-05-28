@@ -1,0 +1,331 @@
+package com.example.superbaseapp
+
+import android.annotation.SuppressLint
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.superbaseapp.ui.theme.SuperbaseappTheme
+import io.github.jan.supabase.annotations.SupabaseExperimental
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.realtime.selectAsFlow
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+val supabase = createSupabaseClient(
+    supabaseUrl = "https://odgsgkhdhylspuheeplg.supabase.co",
+    supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZ3Nna2hkaHlsc3B1aGVlcGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjE3Mjg4NDgsImV4cCI6MjAzNzMwNDg0OH0.5Ul2HDqtrWCLvGP9gl2scsOYz0FTkkbjkg9aOz3BSqU"
+) {
+    install(Postgrest)
+    install(Realtime)
+}
+
+@Serializable
+data class City(
+    val id: Int,
+    val Nombre: String
+)
+
+@Serializable
+data class Country(
+    val id: Int,
+    val Nombre: String,
+    val torneoid: Int
+)
+
+
+
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            SuperbaseappTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    PreviewFifaList()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FifaCardGrid() {
+    val players = remember { generatePlayers() }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(players) { player ->
+            FifaStyleCard(
+                playerName = player.name,
+                position = player.position,
+                stats = player.stats,
+                bombo = player.bombo
+            )
+        }
+    }
+}
+
+@SuppressLint("RememberReturnType")
+@Composable
+
+fun PreviewFifaList() {
+    FifaCardGrid()
+}
+@Composable
+fun FifaCardList() {
+    val players = remember { generatePlayers() }
+
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(players) { player ->
+            FifaStyleCard(
+                playerName = player.name,
+                position = player.position,
+                stats = player.stats,
+                bombo = player.bombo
+            )
+        }
+    }
+}
+@Composable
+fun FifaCardListVertical() {
+    val players = remember { generatePlayers() }
+
+    LazyColumn(
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(players) { player ->
+            FifaStyleCard(
+                playerName = player.name,
+                position = player.position,
+                stats = player.stats,
+                bombo = player.bombo
+            )
+        }
+    }
+}
+
+@Composable
+fun FifaStyleCard(
+    playerName: String,
+    position: String = "ST",
+    stats: PlayerStats,
+    bombo: Int
+) {
+    val cardColor = when (bombo) {
+        1 -> Brush.verticalGradient(listOf(Color(0xFFD4AF37), Color(0xFFB8860B))) // Oro
+        2 -> Brush.verticalGradient(listOf(Color.Magenta, Color.Gray))
+        3 -> Brush.verticalGradient(listOf(Color(0xFFCD7F32), Color(0xFF8B4513))) // Bronce
+        else -> Brush.verticalGradient(listOf(Color.DarkGray, Color.Black))
+    }
+
+    Card(
+        modifier = Modifier
+            .width(220.dp)
+            .height(340.dp)
+            .padding(12.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 16.dp, bottomEnd = 16.dp),
+        elevation = CardDefaults.cardElevation(10.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(cardColor)
+                .fillMaxSize()
+                .padding(12.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+                // Media y posición
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = stats.average.toString(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 32.sp,
+                        color = Color.White
+                    )
+                    Text(
+                        text = position,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 24.sp,
+                        color = Color.White
+                    )
+                }
+
+                // Placeholder de imagen
+                Spacer(Modifier.height(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("IMG", color = Color.DarkGray)
+                }
+
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = playerName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.White
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Stats en dos columnas
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        StatLabel("PAC", stats.pace)
+                        StatLabel("SHO", stats.shooting)
+                        StatLabel("PAS", stats.passing)
+                    }
+                    Column {
+                        StatLabel("DRI", stats.dribbling)
+                        StatLabel("DEF", stats.defending)
+                        StatLabel("PHY", stats.physical)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatLabel(label: String, value: Int) {
+    Text(
+        text = "$label $value",
+        color = Color.White,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(vertical = 2.dp)
+    )
+}
+
+
+data class PlayerStats(
+    val pace: Int,
+    val shooting: Int,
+    val passing: Int,
+    val dribbling: Int,
+    val defending: Int,
+    val physical: Int
+) {
+    val average: Int
+        get() = listOf(pace, shooting, passing, dribbling, defending, physical).average().toInt()
+}
+
+fun generateStatsForBombo(bombo: Int): PlayerStats {
+    val mediaRanges = listOf(
+        89..99,
+        78..88,
+        67..77,
+        56..66,
+        45..55,
+        34..44
+    )
+
+    val averageTarget = mediaRanges.getOrElse(bombo - 1) { 34..44 }.random()
+
+    // Generar 6 stats aleatorias que promedien alrededor del target
+    val base = averageTarget - 5
+    val top = averageTarget + 5
+
+    val stats = List(6) { (base..top).random() }
+
+    return PlayerStats(
+        pace = stats[0],
+        shooting = stats[1],
+        passing = stats[2],
+        dribbling = stats[3],
+        defending = stats[4],
+        physical = stats[5]
+    )
+}
+
+data class Player(
+    val name: String,
+    val position: String,
+    val bombo: Int,
+    val stats: PlayerStats
+)
+
+fun generatePlayers(): List<Player> {
+    val names = listOf("Mbappé", "Modric", "Vinicius", "Haaland", "Pedri", "Nico")
+    val positions = listOf("ST", "CM", "LW", "CF", "CAM", "RW")
+
+    return (1..6).map { bombo ->
+        Player(
+            name = names[bombo - 1],
+            position = positions[bombo - 1],
+            bombo = bombo,
+            stats = generateStatsForBombo(bombo)
+        )
+    }
+}
+
