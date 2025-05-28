@@ -58,29 +58,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-val supabase = createSupabaseClient(
-    supabaseUrl = "https://odgsgkhdhylspuheeplg.supabase.co",
-    supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9kZ3Nna2hkaHlsc3B1aGVlcGxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjE3Mjg4NDgsImV4cCI6MjAzNzMwNDg0OH0.5Ul2HDqtrWCLvGP9gl2scsOYz0FTkkbjkg9aOz3BSqU"
-) {
-    install(Postgrest)
-    install(Realtime)
-}
-
-@Serializable
-data class City(
-    val id: Int,
-    val Nombre: String
-)
-
-@Serializable
-data class Country(
-    val id: Int,
-    val Nombre: String,
-    val torneoid: Int
-)
-
-
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
