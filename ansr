@@ -80,7 +80,17 @@ data class PlayerStats(
     val average: Int
         get() = listOf(pace, shooting, passing, dribbling, defending, physical).average().toInt()
 }
-
+data class GoalkeeperStats(
+    val diving: Int,
+    val handling: Int,
+    val kicking: Int,
+    val reflexes: Int,
+    val speed: Int,
+    val positioning: Int
+) {
+    val average: Int
+        get() = listOf(diving, handling, kicking, reflexes, speed, positioning).average().toInt()
+}
 fun generateStatsForBombo(bombo: Int): PlayerStats {
     val (min, max) = when (bombo) {
         1 -> 89 to 99
