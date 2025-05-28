@@ -69,6 +69,10 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+sealed interface Stats {
+    val average: Int
+}
+
 data class PlayerStats(
     val pace: Int,
     val shooting: Int,
@@ -76,10 +80,11 @@ data class PlayerStats(
     val dribbling: Int,
     val defending: Int,
     val physical: Int
-) {
-    val average: Int
+) : Stats {
+    override val average: Int
         get() = listOf(pace, shooting, passing, dribbling, defending, physical).average().toInt()
 }
+
 data class GoalkeeperStats(
     val diving: Int,
     val handling: Int,
@@ -87,10 +92,11 @@ data class GoalkeeperStats(
     val reflexes: Int,
     val speed: Int,
     val positioning: Int
-) {
-    val average: Int
+) : Stats {
+    override val average: Int
         get() = listOf(diving, handling, kicking, reflexes, speed, positioning).average().toInt()
 }
+
 fun generateStatsForBombo(bombo: Int): PlayerStats {
     val (min, max) = when (bombo) {
         1 -> 89 to 99
@@ -293,6 +299,49 @@ fun Path.fifaExactShape(width: Float, height: Float): Path {
     }
     close()
     return this
+}
+
+fun generarJugadorAleatorio(nombre: String, posicion: String, bombo: Bombo): Jugador {
+    val range = bombo.range
+    val stats: Stats = if (posicion == "GK") {
+        GoalkeeperStats(
+            diving = range.random(),
+            handling = range.random(),
+            kicking = range.random(),
+            reflexes = range.random(),
+            speed = range.random(),
+            positioning = range.random()
+        )
+    } else {
+        PlayerStats(
+            pace = range.random(),
+            shooting = range.random(),
+            passing = range.random(),
+            dribbling = range.random(),
+            defending = range.random(),
+            physical = range.random()
+        )
+    }
+
+    return Jugador(nombre = nombre, posicion = posicion, bombo = bombo, stats = stats)
+}
+
+data class Jugador(
+    val nombre: String,
+    val posicion: String, // Ej: "ST", "GK"
+    val bombo: Bombo,
+    val stats: Stats
+) {
+    val media: Int
+        get() = stats.average
+}
+enum class Bombo(val range: IntRange) {
+    BOMBO1(89..99),
+    BOMBO2(78..88),
+    BOMBO3(67..77),
+    BOMBO4(56..66),
+    BOMBO5(45..55),
+    BOMBO6(34..44)
 }
 
 
